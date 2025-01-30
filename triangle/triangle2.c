@@ -3,8 +3,8 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "shader_s.h"
-#include "stb_image.h"
+#include "../include/shader_s.h"
+#include "../include/stb_image.h"
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
