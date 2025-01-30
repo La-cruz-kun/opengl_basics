@@ -142,31 +142,44 @@ int main() {
                        GL_FALSE, &projection[0][0]);
 
     glBindVertexArray(VAO);
-    for (unsigned int i=0; i < 10; i++) {
+    for (unsigned int i = 0; i < 10; i++) {
       mat4 model = GLM_MAT4_IDENTITY;
       glm_translate(model, cubePositions[i]);
-      float angle = 20.f * (10 - i);
-      glm_rotate(model, (float)glfwGetTime() * glm_rad(angle), (vec3){1.0, 0.3, 0.5});
+      float angle = 20.f * i;
+      if (i % 3 == 0) {
+        glm_rotate(model, (float)glfwGetTime() * glm_rad(angle),
+                   (vec3){1.0, 0.3, 0.5});
+        glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1,
+                           GL_FALSE, &model[0][0]);
+      }
+      if (i == 0) {
+        angle = 20.f * (5 - i);
+        glm_rotate(model, (float)glfwGetTime() * glm_rad(angle),
+                   (vec3){1.0, 0.3, 0.5});
+        glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1,
+                           GL_FALSE, &model[0][0]);
+      }
+      glm_rotate(model, glm_rad(angle), (vec3){1.0, 0.3, 0.5});
       glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE,
                          &model[0][0]);
       glDrawArrays(GL_TRIANGLES, 0, 36);
-        }
-      glfwSwapBuffers(window);
-      glfwPollEvents();
     }
-
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-    glDeleteBuffers(1, &EBO);
-    glfwTerminate();
-    return 0;
+    glfwSwapBuffers(window);
+    glfwPollEvents();
   }
 
-  void framebuffer_size_callback(GLFWwindow * window, int width, int height) {
-    glViewport(0, 0, width, height);
-  }
+  glDeleteVertexArrays(1, &VAO);
+  glDeleteBuffers(1, &VBO);
+  glDeleteBuffers(1, &EBO);
+  glfwTerminate();
+  return 0;
+}
 
-  void processInput(GLFWwindow * window) {
-    if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS)
-      glfwSetWindowShouldClose(window, true);
-  }
+void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
+  glViewport(0, 0, width, height);
+}
+
+void processInput(GLFWwindow *window) {
+  if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS)
+    glfwSetWindowShouldClose(window, true);
+}
