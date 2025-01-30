@@ -1,4 +1,5 @@
 #include <glad/glad.h>
+
 #include <GLFW/glfw3.h>
 #include <cglm/affine.h>
 #include <cglm/cglm.h>
@@ -100,26 +101,42 @@ int main() {
     return -1;
   };
 
-  mat4 trans = GLM_MAT4_IDENTITY;
-  glm_rotate(trans, glm_rad(90.0f), (vec3){0.0f, 0.0f, 1.0f});
-  glm_scale(trans, (vec3){0.5, 0.5, 0.5});
-
   stbi_image_free(data);
   ShaderUse(shader);
-  unsigned int transformLoc = glGetUniformLocation(shader.ID, "transform");
-  glUniformMatrix4fv(transformLoc, 1, GL_FALSE, (float *)trans);
+
+  mat4 scale = GLM_MAT4_IDENTITY;
+  glm_scale(scale, (vec3){0.5, 0.5, 0.0});
   while (!glfwWindowShouldClose(window)) {
     // input
     processInput(window);
 
-    // render
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    glBindTexture(GL_TEXTURE_2D, texture);
     ShaderUse(shader);
+    mat4 trans = GLM_MAT4_IDENTITY;
+    glm_rotate(trans, (float)glfwGetTime(), (vec3){0.0f, 0.0f, 1.0f});
+    glm_translate(trans, (vec3){0.5f, -0.5f, 0.0f});
+
+    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "scale"), 1, GL_FALSE,
+                       (float *)scale);
+    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "transform"), 1,
+                       GL_FALSE, (float *)trans); // render
+
+    glBindTexture(GL_TEXTURE_2D, texture);
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+    glm_mat4_identity(trans);
+    glm_translate(trans, (vec3){0.5f, -0.5f, 0.0f});
+    glm_scale(trans, (vec3){sin(glfwGetTime()), sin(glfwGetTime()),
+                            sin(glfwGetTime())});
+    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "scale"), 1, GL_FALSE,
+                       (float *)scale);
+    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "transform"), 1,
+                       GL_FALSE, (float *)trans); // render
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
     glfwSwapBuffers(window);
     glfwPollEvents();
   }
