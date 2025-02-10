@@ -1,3 +1,7 @@
 #include <stdio.h>
 
-int main() { printf("hello world"); }
+int main() 
+{ 
+    float a[3] = {1,2,3};
+    printf("hello world"); 
+}
