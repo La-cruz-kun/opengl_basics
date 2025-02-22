@@ -1,33 +1,24 @@
-#include <cglm/mat4.h>
+#include <cglm/cam.h>
 #include <glad/glad.h>
 
 #include <GLFW/glfw3.h>
 #include <cglm/affine.h>
 #include <cglm/cglm.h>
+#include <cglm/mat4.h>
+#include <cglm/util.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "../include/camera.h"
 #include "../include/shader_s.h"
 #include "../include/stb_image.h"
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
-void mouse_callback(GLFWwindow *window, double xposIn, double yposIn);
 
 int WINDOW_HIGHT = 720;
 int WINDOW_WIDTH = 1200;
-
-Camera camera;
-bool firstMouse = true;
-float lastX = 600;
-float lastY = 360;
-float deltaTime = 0.0;
-float lastFrame = 0.0;
-
 int main() {
-    Camera_init(&camera, (vec3){0.0, 0.0, 3.0}, (vec3){0.0, 1.0, 0.0},  90.0, 0.0);
   glfwInit();
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -42,8 +33,6 @@ int main() {
   }
   glfwMakeContextCurrent(window);
   glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-  glfwSetCursorPosCallback(window, mouse_callback);
-  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
     printf("Failed to initialize GLAD\n");
@@ -132,12 +121,8 @@ int main() {
   stbi_image_free(data);
   ShaderUse(shader);
 
-
   while (!glfwWindowShouldClose(window)) {
     // input
-    float currentFrame = (float) glfwGetTime();
-    deltaTime = currentFrame - lastFrame;
-    lastFrame = currentFrame;
     processInput(window);
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -146,21 +131,34 @@ int main() {
     glBindTexture(GL_TEXTURE_2D, texture);
 
     ShaderUse(shader);
-      mat4 projection = GLM_MAT4_IDENTITY;
-  glm_perspective(camera.Zoom, (float)WINDOW_WIDTH / (float)WINDOW_HIGHT,
-                  0.1f, 100.f, projection);
-    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "projection"), 1,
-                       GL_FALSE, &projection[0][0]);
     mat4 view = GLM_MAT4_IDENTITY;
-    GetViewMatrix(&camera, view);
+    glm_translate(view, (vec3){0.0, 0.0, -3.0});
+    mat4 projection = GLM_MAT4_IDENTITY;
+    glm_perspective(glm_rad(45.0), (float)WINDOW_WIDTH / (float)WINDOW_HIGHT,
+                    0.1f, 100.f, projection);
     glUniformMatrix4fv(glGetUniformLocation(shader.ID, "view"), 1, GL_FALSE,
                        &view[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "projection"), 1,
+                       GL_FALSE, &projection[0][0]);
 
     glBindVertexArray(VAO);
     for (unsigned int i = 0; i < 10; i++) {
       mat4 model = GLM_MAT4_IDENTITY;
       glm_translate(model, cubePositions[i]);
       float angle = 20.f * i;
+      if (i % 3 == 0) {
+        glm_rotate(model, (float)glfwGetTime() * glm_rad(angle),
+                   (vec3){1.0, 0.3, 0.5});
+        glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1,
+                           GL_FALSE, &model[0][0]);
+      }
+      if (i == 0) {
+        angle = 20.f * (5 - i);
+        glm_rotate(model, (float)glfwGetTime() * glm_rad(angle),
+                   (vec3){1.0, 0.3, 0.5});
+        glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1,
+                           GL_FALSE, &model[0][0]);
+      }
       glm_rotate(model, glm_rad(angle), (vec3){1.0, 0.3, 0.5});
       glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE,
                          &model[0][0]);
@@ -182,34 +180,6 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
 }
 
 void processInput(GLFWwindow *window) {
-  if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS) {
+  if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS)
     glfwSetWindowShouldClose(window, true);
-  }
-  if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-    ProcessKeyboard(&camera, FORWARD, deltaTime);
-  }
-  if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-    ProcessKeyboard(&camera, BACKWARD, deltaTime);
-  }
-  if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-    ProcessKeyboard(&camera, LEFT, deltaTime);
-  }
-  if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-    ProcessKeyboard(&camera, RIGHT, deltaTime);
-  }
-}
-
-void mouse_callback(GLFWwindow *window, double xposIn, double yposIn) {
-    float xpos = (float) xposIn;
-    float ypos = (float) yposIn;
-  if (firstMouse) {
-    lastX = xpos;
-    lastY = ypos;
-    firstMouse = false;
-  }
-  float xoffset = xpos - lastX;
-  float yoffset = lastY - ypos;
-  lastX = xpos;
-  lastY = ypos;
-  ProcessMouseMovement(&camera, xoffset, yoffset, true);
 }
