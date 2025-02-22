@@ -1,29 +1,33 @@
-#include <cglm/cam.h>
-#include <cglm/vec3.h>
+#include <cglm/mat4.h>
 #include <glad/glad.h>
 
 #include <GLFW/glfw3.h>
 #include <cglm/affine.h>
 #include <cglm/cglm.h>
-#include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "../include/camera2.h"
 #include "../include/shader_s.h"
 #include "../include/stb_image.h"
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
+void mouse_callback(GLFWwindow *window, double xposIn, double yposIn);
 
-vec3 cameraPos = (vec3){0.0, 0.0, 3.0};
-vec3 cameraUp = (vec3){0.0, 1.0, 0.0};
-vec3 cameraFront = (vec3) {0.0, 0.0, -1.0};
-vec3 result;
-const float cameraSpeed = 0.05;
 int WINDOW_HIGHT = 720;
 int WINDOW_WIDTH = 1200;
+
+Camera camera;
+bool firstMouse = true;
+float lastX = 600;
+float lastY = 360;
+float deltaTime = 0.0;
+float lastFrame = 0.0;
+
 int main() {
+    Camera_init(&camera, (vec3){0.0, 0.0, 3.0}, (vec3){0.0, 1.0, 0.0},  90.0, 0.0);
   glfwInit();
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -38,6 +42,8 @@ int main() {
   }
   glfwMakeContextCurrent(window);
   glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+  glfwSetCursorPosCallback(window, mouse_callback);
+  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
     printf("Failed to initialize GLAD\n");
@@ -129,6 +135,9 @@ int main() {
 
   while (!glfwWindowShouldClose(window)) {
     // input
+    float currentFrame = (float) glfwGetTime();
+    deltaTime = currentFrame - lastFrame;
+    lastFrame = currentFrame;
     processInput(window);
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -137,17 +146,15 @@ int main() {
     glBindTexture(GL_TEXTURE_2D, texture);
 
     ShaderUse(shader);
-    mat4 view;
-    vec3 local_result;
-    glm_vec3_add(cameraPos, cameraFront, local_result);
-    glm_lookat(cameraPos, local_result, cameraUp, view);
-    mat4 projection = GLM_MAT4_IDENTITY;
-    glm_perspective(glm_rad(45.0), (float)WINDOW_WIDTH / (float)WINDOW_HIGHT,
-                    0.1f, 100.f, projection);
-    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "view"), 1, GL_FALSE,
-                       &view[0][0]);
+      mat4 projection = GLM_MAT4_IDENTITY;
+  glm_perspective(camera.Zoom, (float)WINDOW_WIDTH / (float)WINDOW_HIGHT,
+                  0.1f, 100.f, projection);
     glUniformMatrix4fv(glGetUniformLocation(shader.ID, "projection"), 1,
                        GL_FALSE, &projection[0][0]);
+    mat4 view = GLM_MAT4_IDENTITY;
+    GetViewMatrix(&camera, view);
+    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "view"), 1, GL_FALSE,
+                       &view[0][0]);
 
     glBindVertexArray(VAO);
     for (unsigned int i = 0; i < 10; i++) {
@@ -175,36 +182,34 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
 }
 
 void processInput(GLFWwindow *window) {
-  if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS){
+  if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS) {
     glfwSetWindowShouldClose(window, true);
-    }
+  }
+  if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+    ProcessKeyboard(&camera, FORWARD, deltaTime);
+  }
+  if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+    ProcessKeyboard(&camera, BACKWARD, deltaTime);
+  }
+  if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+    ProcessKeyboard(&camera, LEFT, deltaTime);
+  }
+  if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+    ProcessKeyboard(&camera, RIGHT, deltaTime);
+  }
+}
 
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
-        vec3 temp;
-        glm_vec3_scale(cameraFront, cameraSpeed, temp);
-        glm_vec3_add(cameraPos, temp, result);
-        glm_vec3_copy(result, cameraPos);
-    }
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS){
-        vec3 temp;
-        glm_vec3_scale(cameraFront, cameraSpeed, temp);
-        glm_vec3_sub(cameraPos, temp, result);
-        glm_vec3_copy(result, cameraPos);
-    }
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS){
-        vec3 temp;
-        glm_cross(cameraUp, cameraFront, temp);
-        glm_normalize(temp);
-        glm_vec3_scale(temp, cameraSpeed, result);
-        glm_vec3_add(cameraPos, result, temp);
-        glm_vec3_copy(temp, cameraPos);
-    }
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS){
-        vec3 temp;
-        glm_cross(cameraUp, cameraFront, temp);
-        glm_normalize(temp);
-        glm_vec3_scale(temp, cameraSpeed, result);
-        glm_vec3_sub(cameraPos, result, temp);
-        glm_vec3_copy(temp, cameraPos);
-    }
+void mouse_callback(GLFWwindow *window, double xposIn, double yposIn) {
+    float xpos = (float) xposIn;
+    float ypos = (float) yposIn;
+  if (firstMouse) {
+    lastX = xpos;
+    lastY = ypos;
+    firstMouse = false;
+  }
+  float xoffset = xpos - lastX;
+  float yoffset = lastY - ypos;
+  lastX = xpos;
+  lastY = ypos;
+  ProcessMouseMovement(&camera, xoffset, yoffset, true);
 }
