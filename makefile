@@ -1,6 +1,6 @@
 CFLAGS = -std=c99 -Wall -Werror 
-cc = clang
-SRC_FILES = ../include/stb.c ../include/shader_s.c
+cc = gcc
+SRC_FILES = include/stb.c include/shader_s.c
 
 triangle: triangle/triangle.c
 	$(cc) triangle/triangle.c -o triangle -lglad -lglfw -lGL
