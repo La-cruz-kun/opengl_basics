@@ -8,7 +8,9 @@ enum Camera_Movement {
     FORWARD,
     BACKWARD,
     LEFT,
-    RIGHT
+    RIGHT,
+    UP,
+    DOWN
 };
 
 #define YAW         -90.0f
@@ -69,6 +71,12 @@ static inline void ProcessKeyboard(Camera* cam, enum Camera_Movement direction, 
             break;
         case RIGHT:
             glm_vec3_muladds(cam->Right, velocity, cam->Position);
+            break;
+        case UP:
+            glm_vec3_muladds(cam->Up, velocity, cam->Position);
+            break;
+        case DOWN:
+            glm_vec3_muladds(cam->Up, -velocity, cam->Position);
             break;
     }
 }

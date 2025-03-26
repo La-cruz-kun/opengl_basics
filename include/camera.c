@@ -13,7 +13,7 @@ void CameraInitVector(Camera *camera, float *position, float *up, float yaw,
   glm_vec3_copy(up, camera->WorldUp);
   camera->Yaw = yaw;
   camera->Pitch = pitch;
-  updateCameraVector(camera);
+  updateCameraVectors(camera);
 };
 
 void CameraInitScaler(Camera *camera, float posX, float posY, float posZ,
@@ -26,7 +26,7 @@ void CameraInitScaler(Camera *camera, float posX, float posY, float posZ,
   glm_vec3_copy((vec3){upX, upY, upZ}, camera->WorldUp);
   camera->Yaw = yaw;
   camera->Pitch = pitch;
-  updateCameraVector(camera);
+  updateCameraVectors(camera);
 }
 
 void CameraGetViewMatrix(Camera camera, mat4 destination) {
@@ -35,7 +35,7 @@ void CameraGetViewMatrix(Camera camera, mat4 destination) {
   glm_lookat(camera.Position, temp, camera.Up, destination);
 }
 
-void CameraProcessKeyboard(Camera *camera, Camera_Movement direction,
+void CameraProcessKeyboard(Camera *camera, enum Camera_Movement direction,
                            float deltaTime) {
   float velocity = camera->MovementSpeed * deltaTime;
   if (direction == FORWARD) {
@@ -82,7 +82,7 @@ void CameraProcessMouseMovement(Camera *camera, float xoffset, float yoffset,
     if (camera->Pitch < -89.0)
       camera->Pitch = -89.0;
   }
-  updateCameraVector(camera);
+  updateCameraVectors(camera);
 }
 
 void CameraProcessMouseScroll(Camera *camera, float yoffset) {
@@ -93,7 +93,7 @@ void CameraProcessMouseScroll(Camera *camera, float yoffset) {
     camera->Zoom = 45.0;
 }
 
-void updateCameraVector(Camera *camera) {
+void updateCameraVectors(Camera *camera) {
   vec3 front;
   vec3 temp;
   front[0] = cos(glm_rad(camera->Yaw)) * sin(glm_rad(camera->Pitch));

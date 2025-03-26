@@ -1,24 +1,6 @@
-CFLAGS = -std=c99 -Wall -Werror 
-cc = gcc
-SRC_FILES = include/stb.c include/shader_s.c
-
-triangle: triangle/triangle.c
-	$(cc) triangle/triangle.c -o triangle -lglad -lglfw -lGL
-
-triangle2: triangle/triangle2.c
-	$(cc) triangle/triangle2.c $(SRC_FILES) $(CFLAGS) -o tri2 -lglad -lglfw -lGL -lm
-
-foo: foo.c 
-	$(cc) foo.c shader_s.c -o foo -lglad
-
-transformation: transformation/transformation.c
-	$(cc) transformation/transformation.c $(SRC_FILES) $(CFLAGS) -o transformation -lglad -lglfw -lGL -lm -lcglm
-
-coord: coordinate_system/coord.c
-	$(cc) coordinate_system/coord.c $(SRC_FILES) $(CFLAGS) -o coord -lglad -lglfw -lGL -lm -lcglm
-
-camera: camera/camera_test.c
-	$(cc) camera/camera_test.c $(SRC_FILES) $(CFLAGS) -o camera -lglad -lglfw -lGL -lm -lcglm
-
-color: color/color
-	$(cc) color/color.c $(SRC_FILES) $(CFLAGS) -o color -lglad -lglfw -lGL -lm -lcglm
+CC = clang
+C_FLAGS = -std=c99 -Wall -Wextra
+SRC_FILES = include/shader_s.c include/stb.c 
+COLOR_FILES = color/color.c color/vertex.glsl color/fragment.glsl color/light_fragment.glsl color/light_vertex.glsl
+color1: $(COLOR_FILES)
+	$(CC) color/color.c $(SRC_FILES) $(C_FLAGS) -o color1 -lglad -lglfw -lGL -lm -lcglm
