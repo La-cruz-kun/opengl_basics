@@ -1,4 +1,3 @@
-#include <cglm/mat3.h>
 #include <glad/glad.h>
 
 #include <GLFW/glfw3.h>
@@ -30,6 +29,13 @@ float lastY = 360;
 
 vec3 result;
 vec3 temp;
+
+typedef struct {
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+    float shininess;
+} Material;
 
 int main() {
     Camera_init(&camera, (vec3) {7, 4, 11}, (vec3) {0, 1, 0}, yaw, pitch);
@@ -101,11 +107,17 @@ int main() {
         -1.0f, -1.0f,  1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f,  // Front-left
         -1.0f, -1.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f,  // Back-left
     };
-    vec3 cubePosition = {0.0f, 0.0f, 0.0f};
+    vec3 cubePosition[] = {{0.0f, 0.0f, 0.0f}, {-3.0f, 0.0f, 0.0f}, {3.0f, 0.0f, 0.0f}, {6.0f, 0.0f, 0.0f}, {-6.0f, 0.0f, 0.0f}};
     vec3 lightPosition = {0.f, 2.0f, 0.0f};
-
-    Shader shader = {"color/vertex.glsl", "color/fragment.glsl", 0};
-    Shader lightShader = {"color/light_vertex.glsl", "color/light_fragment.glsl", 0};
+    Material material[] = {
+        {{0.0, 0.1, 0.06}, {0.0, 0.50980392, 0.50980392}, {0.50196078, 0.50196078, 0.50196078}, 0.25},
+        {{0.2125, 0.1275, 0.054}, {0.780392, 0.568627, 0.113725}, {0.992157, 0.941176, 0.807843}, 0.21794872},
+        {{0.05375, 0.05, 0.06625}, {0.18275, 0.17, 0.22525}, {0.332741, 0.328634, 0.346435}, 0.3},
+        {{0.19225, 0.19225, 0.19225}, {0.50754, 0.50754, 0.50754}, {0.508273, 0.508273, 0.508273}, 0.4},
+        {{0.24725, 0.1995, 0.0745}, {0.75164, 0.60648, 0.22648}, {0.628281, 0.555802, 0.366065}, 0.4}
+    };
+    Shader shader = {"material/vertex.glsl", "material/fragment.glsl", 0};
+    Shader lightShader = {"material/light_vertex.glsl", "material/light_fragment.glsl", 0};
     ShaderInit(&shader);
     ShaderInit(&lightShader);
     unsigned int VAO;
@@ -144,7 +156,6 @@ int main() {
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwSetCursorPosCallback(window, mouse_callback);
-    vec3 objectColor = {1.0f, 0.5f, 0.31f};
     vec3 lightColor = {1, 1, 1};
     ShaderUse(shader);
     while (!glfwWindowShouldClose(window)) {
@@ -153,19 +164,29 @@ int main() {
         lastFrame = currentFrame;
         processInput(window);
 
+        vec3 lightdiffuse;
+        glm_vec3_mul((vec3) {0.5, 0.5, 0.5}, lightColor, lightdiffuse);
+        vec3 lightambient;
+        glm_vec3_mul((vec3) {0.2, 0.2, 0.2}, lightColor, lightambient);
+
         lightPosition[0] = 4 * sin(glfwGetTime());
         lightPosition[2] = 4 * cos(glfwGetTime());
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glClearColor(0, 0, 0, 1.0);
 
 
-        // render object
+        //cyan plastic
         ShaderUse(shader);
-
+        GLuint matAmbient = glGetUniformLocation(shader.ID, "material.ambient");
+        GLuint matDiffuse = glGetUniformLocation(shader.ID, "material.diffuse");
+        GLuint matSpecular = glGetUniformLocation(shader.ID, "material.specular");
+        GLuint matShininess = glGetUniformLocation(shader.ID, "material.shininess");
         // get uniforms
-        glUniform3f(glGetUniformLocation(shader.ID, "objectColor"), objectColor[0], objectColor[1], objectColor[2]);
-        glUniform3f(glGetUniformLocation(shader.ID, "lightColor"), lightColor[0], lightColor[1], lightColor[2]);
         glUniform3f(glGetUniformLocation(shader.ID, "alightPos"), lightPosition[0], lightPosition[1], lightPosition[2]);
+
+        glUniform3f(glGetUniformLocation(shader.ID, "light.ambient"), lightambient[0], lightambient[1], lightambient[2]);
+        glUniform3f(glGetUniformLocation(shader.ID, "light.diffuse"), lightdiffuse[0], lightdiffuse[1], lightdiffuse[2]);
+        glUniform3f(glGetUniformLocation(shader.ID, "light.specular"), 1.0, 1.0, 1.0);
         mat4 view;
         GetViewMatrix(&camera, view);
         glUniformMatrix4fv(glGetUniformLocation(shader.ID, "view"), 1, GL_FALSE,
@@ -173,29 +194,37 @@ int main() {
         glUniformMatrix4fv(glGetUniformLocation(shader.ID, "projection"), 1,
                            GL_FALSE, &projection[0][0]);
         glBindVertexArray(VAO);
-        glm_mat4_identity(modelCube);
-        glm_translate(modelCube, cubePosition);
-        glm_mat3_inv((mat3) {{modelCube[0][0], modelCube[0][1], modelCube[0][2]}, 
-                {modelCube[1][0], modelCube[1][1], modelCube[1][2]}, 
-                {modelCube[2][0], modelCube[2][1], modelCube[2][2]}}, normalModel);
-        glUniformMatrix3fv(glGetUniformLocation(shader.ID, "normalModel"), 1, GL_FALSE,
-                 &normalModel[0][0]);
-        glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE,
-                 &modelCube[0][0]);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        for (int i = 0; i < 5; i++) {
+            glUniform3f(matAmbient, material[i].ambient[0], material[i].ambient[1], material[i].ambient[2]);
+            glUniform3f(matDiffuse, material[i].diffuse[0], material[i].diffuse[1], material[i].diffuse[2]);
+            glUniform3f(matSpecular, material[i].specular[0], material[i].specular[1], material[i].specular[2]);
+            glUniform1f(matShininess, material[i].shininess);
+            glm_mat4_identity(modelCube);
+            glm_translate(modelCube, cubePosition[i]);
+            glm_mat3_inv((mat3) {{modelCube[0][0], modelCube[0][1], modelCube[0][2]}, 
+                    {modelCube[1][0], modelCube[1][1], modelCube[1][2]}, 
+                    {modelCube[2][0], modelCube[2][1], modelCube[2][2]}}, normalModel);
+            glUniformMatrix3fv(glGetUniformLocation(shader.ID, "normalModel"), 1, GL_FALSE,
+                     &normalModel[0][0]);
+            glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE,
+                     &modelCube[0][0]);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
+
         
         // render light source
         ShaderUse(lightShader);
         GetViewMatrix(&camera, view);
-        glUniformMatrix4fv(glGetUniformLocation(shader.ID, "view"), 1, GL_FALSE,
+        glUniformMatrix4fv(glGetUniformLocation(lightShader.ID, "view"), 1, GL_FALSE,
                            &view[0][0]);
-        glUniformMatrix4fv(glGetUniformLocation(shader.ID, "projection"), 1,
+        glUniformMatrix4fv(glGetUniformLocation(lightShader.ID, "projection"), 1,
                            GL_FALSE, &projection[0][0]);
+        glUniform3f(glGetUniformLocation(lightShader.ID, "Color"), lightColor[0], lightColor[1], lightColor[2]);
 
         glm_mat4_identity(modelCube);
         glm_translate(modelCube, lightPosition);
         glm_scale(modelCube, (vec3) {0.1, 0.1, 0.1});
-        glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE,
+        glUniformMatrix4fv(glGetUniformLocation(lightShader.ID, "model"), 1, GL_FALSE,
                  &modelCube[0][0]);
         glBindVertexArray(lightVAO);
         glDrawArrays(GL_TRIANGLES, 0, 36);
