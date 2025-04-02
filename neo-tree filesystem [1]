@@ -1,0 +1,29 @@
+  ~/Documents/dev/C_Basics/opengl
+    camera
+    color
+    coordinate_system
+    include
+    lighting_maps
+   │ * fragment.glsl                   
+   │ * light_fragment.glsl             
+   │ * light_vertex.glsl               
+   │  lighting_maps.c                 
+   └ * vertex.glsl                     
+    material
+    src
+    transformation
+    triangle
+   │  shader.fs
+   │ * shader.vs
+   │  triangle.c
+   └  triangle2.c
+    awesomeface.png
+   * color1
+    container.jpg
+    container2.png                    
+    foo.c
+   * lighting_maps1                    
+    makefile                        󰄱 
+   * material1
+    wall.jpg
+   (1 hidden item)
