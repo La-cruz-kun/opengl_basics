@@ -112,12 +112,12 @@ int main() {
     float planeVertices[] = {
         // First triangle
         -1.0f, 0.0f, -1.0f,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f,  // Bottom-left
-         1.0f, 0.0f, -1.0f,  0.0f, 1.0f, 0.0f,  1.0f, 0.0f,  // Bottom-right
-         1.0f, 0.0f,  1.0f,  0.0f, 1.0f, 0.0f,  1.0f, 1.0f,  // Top-right
+         1.0f, 0.0f, -1.0f,  0.0f, 1.0f, 0.0f,  5.0f, 0.0f,  // Bottom-right
+         1.0f, 0.0f,  1.0f,  0.0f, 1.0f, 0.0f,  5.0f, 5.0f,  // Top-right
 
         // Second triangle
-         1.0f, 0.0f,  1.0f,  0.0f, 1.0f, 0.0f,  1.0f, 1.0f,  // Top-right
-        -1.0f, 0.0f,  1.0f,  0.0f, 1.0f, 0.0f,  0.0f, 1.0f,  // Top-left
+         1.0f, 0.0f,  1.0f,  0.0f, 1.0f, 0.0f,  5.0f, 5.0f,  // Top-right
+        -1.0f, 0.0f,  1.0f,  0.0f, 1.0f, 0.0f,  0.0f, 5.0f,  // Top-left
         -1.0f, 0.0f, -1.0f,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f   // Bottom-left
     };
 
@@ -171,7 +171,8 @@ int main() {
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6* sizeof(float)));
     glEnableVertexAttribArray(2);
 
-    unsigned char image_data = loadTexture("container2.png");
+    unsigned char diffuse_data = loadTexture("container2.png");
+    unsigned char specular_data = loadTexture("container2_specular.png");
     mat4 modelCube = GLM_MAT4_IDENTITY;
     mat4 projection = GLM_MAT4_IDENTITY;
     glm_perspective(glm_rad(45.0), (float)WINDOWWIDTH / (float)WINDOWHEIGHT, 0.1f,
@@ -182,6 +183,7 @@ int main() {
     vec3 lightColor = {1, 1, 1};
     ShaderUse(shader);
     glUniform1i(glGetUniformLocation(shader.ID, "material.diffuse"), 0);
+    glUniform1i(glGetUniformLocation(shader.ID, "material.specular"), 1);
     while (!glfwWindowShouldClose(window)) {
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
@@ -217,7 +219,9 @@ int main() {
         glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE,
                  &modelCube[0][0]);
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, image_data);
+        glBindTexture(GL_TEXTURE_2D, diffuse_data);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, specular_data);
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -228,7 +232,7 @@ int main() {
         glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE,
                  &modelCube[0][0]);
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, image_data);
+        glBindTexture(GL_TEXTURE_2D, diffuse_data);
         glBindVertexArray(planeVAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
