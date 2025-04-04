@@ -71,8 +71,8 @@ int main() {
                           {1.5f, 0.2f, -1.5f},   {-1.3f, 1.0f, -1.5f}};
 
   Shader shader = {
-      "./vertex.glsl",
-      "./fragment.glsl",
+      "coordinate_system/vertex.glsl",
+      "coordinate_system/fragment.glsl",
   };
   ShaderInit(&shader);
 
@@ -97,6 +97,7 @@ int main() {
   glGenTextures(1, &texture);
   glBindTexture(GL_TEXTURE_2D, texture);
 
+
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
@@ -106,7 +107,7 @@ int main() {
   int height;
   int nrChannel;
   unsigned char *data =
-      stbi_load("../container.jpg", &width, &height, &nrChannel, 0);
+      stbi_load("container.jpg", &width, &height, &nrChannel, 0);
 
   if (data) { // Generate texture ID
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,

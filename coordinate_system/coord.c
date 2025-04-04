@@ -64,15 +64,16 @@ int main() {
       -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
       0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
       -0.5f, 0.5f,  0.5f,  0.0f, 0.0f, -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f};
-  vec3 cubePositions[] = {{0.0f, 0.0f, 0.0f},    {2.0f, 5.0f, -15.0f},
-                          {-1.5f, -2.2f, -2.5f}, {-3.8f, -2.0f, -12.3f},
-                          {2.4f, -0.4f, -3.5f},  {-1.7f, 3.0f, -7.5f},
-                          {1.3f, -2.0f, -2.5f},  {1.5f, 2.0f, -2.5f},
-                          {1.5f, 0.2f, -1.5f},   {-1.3f, 1.0f, -1.5f}};
+  vec3 cubePositions[] = {
+      {2.0f, 5.0f, -15.0f}, {-1.5f, -2.2f, -2.5f}, 
+      {-3.8f, -2.0f, -12.3f}, {2.4f, -0.4f, -3.5f},  
+      {-1.7f, 3.0f, -7.5f}, {1.3f, -2.0f, -2.5f},  
+      {1.5f, 2.0f, -2.5f}, {1.5f, 0.2f, -1.5f},  
+      {0.0f, 0.0f, 0.0f},   {-1.3f, 1.0f, -1.5f}};
 
   Shader shader = {
-      "./vertex.glsl",
-      "./fragment.glsl",
+      "coordinate_system/vertex.glsl",
+      "coordinate_system/fragment.glsl",
   };
   ShaderInit(&shader);
 
@@ -106,7 +107,7 @@ int main() {
   int height;
   int nrChannel;
   unsigned char *data =
-      stbi_load("../container.jpg", &width, &height, &nrChannel, 0);
+      stbi_load("container.jpg", &width, &height, &nrChannel, 0);
 
   if (data) { // Generate texture ID
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
