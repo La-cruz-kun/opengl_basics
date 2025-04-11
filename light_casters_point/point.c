@@ -9,7 +9,6 @@
 #include "../include/stb_image.h"
 #include "../include/camera.h"
 
-
 void framebuffer_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
