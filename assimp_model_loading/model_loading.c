@@ -9,6 +9,7 @@
 
 #include "../include/camera.h"
 #include "../include/shader_s.h"
+#include "../include/model.h"
 #include "../include/stb_image.h"
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
@@ -50,39 +51,17 @@ int main() {
   }
   glEnable(GL_DEPTH_TEST);
 
-  float vertices[] = {
-      -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 0.5f,  -0.5f, -0.5f, 1.0f, 0.0f,
-      0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
-      -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
-
-      -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, 0.5f,  -0.5f, 0.5f,  1.0f, 0.0f,
-      0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-      -0.5f, 0.5f,  0.5f,  0.0f, 1.0f, -0.5f, -0.5f, 0.5f,  0.0f, 0.0f,
-
-      -0.5f, 0.5f,  0.5f,  1.0f, 0.0f, -0.5f, 0.5f,  -0.5f, 1.0f, 1.0f,
-      -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-      -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, -0.5f, 0.5f,  0.5f,  1.0f, 0.0f,
-
-      0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
-      0.5f,  -0.5f, -0.5f, 0.0f, 1.0f, 0.5f,  -0.5f, -0.5f, 0.0f, 1.0f,
-      0.5f,  -0.5f, 0.5f,  0.0f, 0.0f, 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-      -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.5f,  -0.5f, -0.5f, 1.0f, 1.0f,
-      0.5f,  -0.5f, 0.5f,  1.0f, 0.0f, 0.5f,  -0.5f, 0.5f,  1.0f, 0.0f,
-      -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-
-      -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
-      0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-      -0.5f, 0.5f,  0.5f,  0.0f, 0.0f, -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f};
-  vec3 cubePositions[] = {{0.0f, 0.0f, 0.0f},    {2.0f, 5.0f, -15.0f},
-                          {-1.5f, -2.2f, -2.5f}, {-3.8f, -2.0f, -12.3f},
-                          {2.4f, -0.4f, -3.5f},  {-1.7f, 3.0f, -7.5f},
-                          {1.3f, -2.0f, -2.5f},  {1.5f, 2.0f, -2.5f},
-                          {1.5f, 0.2f, -1.5f},   {-1.3f, 1.0f, -1.5f}};
+    FILE *obj;
+    Vertices cube_vertices;
+    Indices cube_indices;
+    if (!(obj = fopen("resource/cube.obj", "r"))){
+        printf("couldn't open 'cube.obj'\n");
+    }
+    parse_obj(obj, &cube_vertices, &cube_indices);
 
   Shader shader = {
-      "./vertex.glsl",
-      "./fragment.glsl",
+      "assimp_model_loading/shader.vs",
+      "assimp_model_loading/shader.fs",
   };
   ShaderInit(&shader);
 
@@ -91,17 +70,20 @@ int main() {
   unsigned int EBO;
   glGenVertexArrays(1, &VAO);
   glGenBuffers(1, &VBO);
+  glGenBuffers(1, &EBO); // Generate the Element Buffer Object
 
   glBindVertexArray(VAO);
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, cube_vertices.size * sizeof(Vertex), cube_vertices.data, GL_STATIC_DRAW);
 
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, cube_indices.size * sizeof(unsigned int), cube_indices.data, GL_STATIC_DRAW);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, Vertices));
   glEnableVertexAttribArray(0);
 
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
-                        (void *)(3 * sizeof(float)));
-  glEnableVertexAttribArray(1);
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); // Note: EBO binding is part of VAO state
 
   unsigned int texture;
   glGenTextures(1, &texture);
@@ -116,7 +98,7 @@ int main() {
   int height;
   int nrChannel;
   unsigned char *data =
-      stbi_load("../container.jpg", &width, &height, &nrChannel, 0);
+      stbi_load("container.jpg", &width, &height, &nrChannel, 0);
 
   if (data) { // Generate texture ID
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
@@ -156,15 +138,11 @@ int main() {
                        &view[0][0]);
 
     glBindVertexArray(VAO);
-    for (unsigned int i = 0; i < 10; i++) {
-      mat4 model = GLM_MAT4_IDENTITY;
-      glm_translate(model, cubePositions[i]);
-      float angle = 20.f * i;
-      glm_rotate(model, glm_rad(angle), (vec3){1.0, 0.3, 0.5});
-      glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE,
-                         &model[0][0]);
-      glDrawArrays(GL_TRIANGLES, 0, 36);
-    }
+    mat4 model = GLM_MAT4_IDENTITY;
+    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE,
+                 &model[0][0]);
+    glDrawElements(GL_TRIANGLES, cube_indices.size, GL_UNSIGNED_INT, 0);
+
     glfwSwapBuffers(window);
     glfwPollEvents();
   }
