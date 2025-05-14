@@ -20,8 +20,10 @@ typedef struct {
 } Indices;
 
 typedef struct {
-    unsigned int id;
-    char * type;
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+    float shininess;
 } Texture;
 
 typedef struct {
@@ -38,4 +40,5 @@ typedef struct {
     unsigned int EBO;
 } Mesh;
 
-int parse_obj(FILE *file, Vertices *vertices, Indices *indices);
+int parse_obj(char *path, Vertices *vertices, Indices *indices, Texture *texture);
+int parse_mtl(char *path, Texture *texture);

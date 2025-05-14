@@ -2,15 +2,17 @@
 #include <string.h>
 #include <stdlib.h>
 
-int parse_obj(FILE *file, Vertices *vertices, Indices *indices)
+int parse_obj(char *path, Vertices *vertices, Indices *indices, Texture *texture)
 {
-    if (!file) {
-        printf("couldn't open obj file\n");
-        return -1;
+    FILE *file;
+
+    if (!(file = fopen(path, "r"))){
+        printf("couldn't open '%s'\n", path);
     }
 
     
     char buffer[512]; //buffer to hold each line of the file
+    char mtllib[128];
     vertices->size = 0;
     indices->size = 0;
     // first iteration to get the number of vertex, faces etc
@@ -23,6 +25,8 @@ int parse_obj(FILE *file, Vertices *vertices, Indices *indices)
         }
     }
 
+    //printf("%zu\n", vertices->size);
+    //printf("%zu\n", indices->size);
     // allocating memory for the datas
     vertices->data = (Vertex *) malloc(sizeof(Vertex) * vertices->size);
     indices->data = (unsigned int *) malloc(sizeof(unsigned int) * indices->size);
@@ -42,8 +46,8 @@ int parse_obj(FILE *file, Vertices *vertices, Indices *indices)
                 vertices->data[total_vertex].Vertices[i] = token;
             }
             total_vertex++;
-        }
-        if (strncmp(buffer, "f ", 2) == 0) {
+        } 
+        else if (strncmp(buffer, "f ", 2) == 0) {
             int i = 0;
             char *tokens[4]; // a pointer to an array of 4 strings
                              // first of all get all the tokens in a line and store them in an array
@@ -56,10 +60,12 @@ int parse_obj(FILE *file, Vertices *vertices, Indices *indices)
             }
             // then go through the array and split by / 
             for (int j = 0; j < 4; j++) {
-                unsigned int second_token = atoi(strtok(tokens[j], "/"));
-                indices->data[total_indices] = second_token - 1;
+                char *second_token = strtok(tokens[j], "/");
+                if (second_token)
+                    indices->data[total_indices] = atoi(second_token) - 1;
                 for (int k = 0; k < 2; k++) {
-                    second_token = atoi(strtok(NULL, "/"));
+                    // continue split cos i haven't implemented the face data for vertex and texture i think
+                    second_token = strtok(NULL, "/");
                 }
                 total_indices++;
             }
@@ -68,18 +74,52 @@ int parse_obj(FILE *file, Vertices *vertices, Indices *indices)
             indices->data[total_indices + 1] = indices->data[total_indices - 4];
             total_indices += 2;
         }
+        else if (strncmp(buffer, "mtllib ", strlen("mtllib ")) == 0) {
+            // split the mtllib from the line and store the file name in mtllib
+            char *token = buffer+ strlen("mtllib ");
+            strcpy(mtllib, token);
+
+            strcpy(token, path);
+
+            // all this sinanegans just to split the main path by / and the replace the last part with the text in mtllib
+            char *mtllib_path = strtok(token, "/");
+            char temp[128] = {0};
+            int mtllib_path_len = strlen(mtllib_path);
+            strcpy(temp, mtllib_path);
+            for (int i = mtllib_path_len; mtllib_path != NULL; i+=mtllib_path_len) {
+                temp[i] = '/';
+                i++;
+                strcpy(temp+i, mtllib_path);
+                mtllib_path = strtok(NULL, "/");
+                if (!mtllib_path) {
+                    strcpy(temp+i-mtllib_path_len-1, mtllib);
+                    break;
+                }
+                mtllib_path_len = strlen(mtllib_path);
+            }
+
+            printf("%s\n", temp);
+
+
+            parse_mtl(mtllib, texture);
+        }
+            
 
     }
     /*for (int i = 0; i < vertices->size; i++) {
         printf("%f, %f, %f\n", vertices->data[i].Vertices[0], vertices->data[i].Vertices[1], vertices->data[i].Vertices[2]);
-    }*/
+    }
 
-    /*for (int i = 0; i < total_indices; i++) {
+    for (int i = 0; i < total_indices; i++) {
         printf("%u\n", indices->data[i]);
-    }*/
+    }
 
-    printf("%lu\n", indices->size);
+    printf("%lu\n", indices->size);*/
     return 0;
 }
 
 
+int parse_mtl(char *path, Texture *texture)
+{
+    return 0;
+}

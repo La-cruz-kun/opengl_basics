@@ -1,5 +1,5 @@
 CC = clang
-C_FLAGS = -std=c99 -Wall -Wextra
+C_FLAGS = -std=c99 -Wall -Wextra -g
 SRC_FILES = include/shader_s.c include/stb.c include/model.c
 COLOR_FILES = color/color.c color/vertex.glsl color/fragment.glsl color/light_fragment.glsl color/light_vertex.glsl
 MATERIAL_FILES = material/material.c material/vertex.glsl material/fragment.glsl material/light_fragment.glsl material/light_vertex.glsl
@@ -30,5 +30,5 @@ spot: $(SPOT_FILES)
 coord1: $(COORD_SYS_FILES)
 	$(CC) coordinate_system/coord.c $(SRC_FILES) $(C_FLAGS) -o coord1 -lglad -lglfw -lGL -lm -lcglm
 
-model: $(MODEL_FILES) 
+model: $(MODEL_FILES) $(SRC_FILES) 
 	$(CC) assimp_model_loading/model_loading.c $(SRC_FILES) $(C_FLAGS) -o model -lglad -lglfw -lGL -lm -lcglm
