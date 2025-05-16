@@ -60,7 +60,7 @@ int main() {
     parse_obj(cube_loc, &cube_vertices, &cube_indices, &cube_tex);
 
 
-    char *obj = "resource/Ball_Rig.obj";
+    char *obj = "resource/cube.obj";
     Vertices obj_vertices;
     Indices obj_indices;
     Texture obj_tex;
@@ -70,11 +70,13 @@ int main() {
     Shader light_shader = {
       "assimp_model_loading/shader.vs",
       "assimp_model_loading/shader.fs",
+      0
     };
 
     Shader models_shader = {
       "assimp_model_loading/vertex.glsl",
       "assimp_model_loading/fragment.glsl",
+      0
     };
 
     ShaderInit(&light_shader);
@@ -117,13 +119,15 @@ int main() {
 
         ShaderUse(models_shader);
         GetViewMatrix(&camera, view);
+        glUniform3f(glGetUniformLocation(models_shader.ID, "material.diffuse"), obj_tex.diffuse[0], obj_tex.diffuse[1], obj_tex.diffuse[2]);
+        glUniform3f(glGetUniformLocation(models_shader.ID, "material.specular"), obj_tex.specular[0], obj_tex.specular[1], obj_tex.specular[2]);
+        glUniform1f(glGetUniformLocation(models_shader.ID, "material.shininess"), obj_tex.shininess);
         glUniformMatrix4fv(glGetUniformLocation(models_shader.ID, "view"), 1, GL_FALSE,
                            &view[0][0]);
-
         glBindVertexArray(modelVAO);
         glUniformMatrix4fv(glGetUniformLocation(models_shader.ID, "model"), 1, GL_FALSE,
                      &model[0][0]);
-        glDrawElements(GL_TRIANGLES, cube_indices.size, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, obj_indices.size, GL_UNSIGNED_INT, 0);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -164,11 +168,11 @@ void processInput(GLFWwindow *window) {
 void mouse_callback(GLFWwindow *window, double xposIn, double yposIn) {
     float xpos = (float) xposIn;
     float ypos = (float) yposIn;
-  if (firstMouse) {
-    lastX = xpos;
-    lastY = ypos;
-    firstMouse = false;
-  }
+    if (firstMouse) {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+    }
   float xoffset = xpos - lastX;
   float yoffset = lastY - ypos;
   lastX = xpos;

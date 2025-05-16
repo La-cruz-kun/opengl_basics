@@ -93,6 +93,7 @@ int parse_obj(char *path, Vertices *vertices, Indices *indices, Texture *texture
                 mtllib_path = strtok(NULL, "/");
                 if (!mtllib_path) {
                     strcpy(temp+i-mtllib_path_len-1, mtllib);
+                    temp[i-mtllib_path_len-2+strlen(mtllib)] = '\0';
                     break;
                 }
                 mtllib_path_len = strlen(mtllib_path);
@@ -101,7 +102,7 @@ int parse_obj(char *path, Vertices *vertices, Indices *indices, Texture *texture
             printf("%s\n", temp);
 
 
-            parse_mtl(mtllib, texture);
+            parse_mtl(temp, texture);
         }
             
 
@@ -121,5 +122,58 @@ int parse_obj(char *path, Vertices *vertices, Indices *indices, Texture *texture
 
 int parse_mtl(char *path, Texture *texture)
 {
+    FILE *file;
+    if (!(file = fopen(path, "r"))) {
+        printf("coulnd't open %s\n", path);
+        return -1;
+    }
+
+    char buffer[512];
+
+    while (fgets(buffer, sizeof(buffer), file)) {
+        if (strncmp(buffer, "Ka ", 3) == 0) {
+            int i = 0;
+            float token = atof(strtok(buffer+3, " "));
+            texture->ambient[i] = token;
+
+            i++;
+            for (; i < 3; i++) {
+                token = atof(strtok(NULL, " "));
+                texture->ambient[i] = token;
+            }
+
+        }
+
+        if (strncmp(buffer, "Kd ", 3) == 0) {
+            int i = 0;
+            float token = atof(strtok(buffer+3, " "));
+            texture->diffuse[i] = token;
+
+            i++;
+            for (; i < 3; i++) {
+                token = atof(strtok(NULL, " "));
+                texture->diffuse[i] = token;
+            }
+
+        }
+
+        if (strncmp(buffer, "Ks ", 3) == 0) {
+            int i = 0;
+            float token = atof(strtok(buffer+3, " "));
+            texture->specular[i] = token;
+
+            i++;
+            for (; i < 3; i++) {
+                token = atof(strtok(NULL, " "));
+                texture->specular[i] = token;
+            }
+
+        }
+
+        if (strncmp(buffer, "Ns ", 3) == 0) {
+            float token = atof(strtok(buffer+3, " "));
+            texture->shininess = token;
+        }
+    }
     return 0;
 }
