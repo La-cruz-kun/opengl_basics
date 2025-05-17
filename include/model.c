@@ -1,8 +1,20 @@
 #include "model.h"
 #include <string.h>
 #include <stdlib.h>
+/*
+void (dtarray_update)(Textures *texture) {
+    if (texture->count == texture->size) {
+        Texture *temp = (Texture *)malloc(sizeof(Texture) * texture->size * 2);
+        for (size_t i = 0; i < texture->size; i++) {
+            temp[i] = texture->data[i];
+        }
+        free(texture->data);
+        texture->data = temp;
+    }
+}
+*/
 
-int parse_obj(char *path, Vertices *vertices, Indices *indices, Texture *texture)
+int parse_obj(char *path, Vertices *vertices, Indices *indices, Textures *texture)
 {
     FILE *file;
 
@@ -49,17 +61,18 @@ int parse_obj(char *path, Vertices *vertices, Indices *indices, Texture *texture
         } 
         else if (strncmp(buffer, "f ", 2) == 0) {
             int i = 0;
-            char *tokens[4]; // a pointer to an array of 4 strings
+            char *tokens[5] = {NULL}; // a pointer to an array of 4 strings
                              // first of all get all the tokens in a line and store them in an array
             char *first_token = strtok(buffer+1, " ");
             tokens[i] = first_token;
             i++;
-            for (; i < 4; i++) {
+            for (; i < 5; i++) {
                 first_token = strtok(NULL, " ");
                 tokens[i] = first_token;
             }
             // then go through the array and split by / 
-            for (int j = 0; j < 4; j++) {
+            int j;
+            for (j = 0; j < 4; j++) {
                 char *second_token = strtok(tokens[j], "/");
                 if (second_token)
                     indices->data[total_indices] = atoi(second_token) - 1;
@@ -120,7 +133,7 @@ int parse_obj(char *path, Vertices *vertices, Indices *indices, Texture *texture
 }
 
 
-int parse_mtl(char *path, Texture *texture)
+int parse_mtl(char *path, Textures *texture)
 {
     FILE *file;
     if (!(file = fopen(path, "r"))) {
@@ -129,17 +142,27 @@ int parse_mtl(char *path, Texture *texture)
     }
 
     char buffer[512];
+    //texture->update = dtarray_update;
+    //texture->data = (Texture *)malloc(sizeof(Texture) * 4);
+    texture->size = 4;
+    texture->count = 0;
 
     while (fgets(buffer, sizeof(buffer), file)) {
+        if (strncmp(buffer, "newmtl ", strlen("newmtl ")) == 0) {
+            texture->count++;
+            //texture->update(texture);
+            char *token = strtok(buffer+strlen("newmtl "), " ");
+            strcpy(texture->data[texture->count - 1].material, token);
+        }
         if (strncmp(buffer, "Ka ", 3) == 0) {
             int i = 0;
             float token = atof(strtok(buffer+3, " "));
-            texture->ambient[i] = token;
+            texture->data[texture->count - 1].ambient[i] = token;
 
             i++;
             for (; i < 3; i++) {
                 token = atof(strtok(NULL, " "));
-                texture->ambient[i] = token;
+                texture->data[texture->count - 1].ambient[i] = token;
             }
 
         }
@@ -147,12 +170,12 @@ int parse_mtl(char *path, Texture *texture)
         if (strncmp(buffer, "Kd ", 3) == 0) {
             int i = 0;
             float token = atof(strtok(buffer+3, " "));
-            texture->diffuse[i] = token;
+            texture->data[texture->count - 1].diffuse[i] = token;
 
             i++;
             for (; i < 3; i++) {
                 token = atof(strtok(NULL, " "));
-                texture->diffuse[i] = token;
+                texture->data[texture->count - 1].diffuse[i] = token;
             }
 
         }
@@ -160,19 +183,19 @@ int parse_mtl(char *path, Texture *texture)
         if (strncmp(buffer, "Ks ", 3) == 0) {
             int i = 0;
             float token = atof(strtok(buffer+3, " "));
-            texture->specular[i] = token;
+            texture->data[texture->count - 1].specular[i] = token;
 
             i++;
             for (; i < 3; i++) {
                 token = atof(strtok(NULL, " "));
-                texture->specular[i] = token;
+                texture->data[texture->count - 1].specular[i] = token;
             }
 
         }
 
         if (strncmp(buffer, "Ns ", 3) == 0) {
             float token = atof(strtok(buffer+3, " "));
-            texture->shininess = token;
+            texture->data[texture->count - 1].shininess = token;
         }
     }
     return 0;

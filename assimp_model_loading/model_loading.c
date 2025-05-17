@@ -56,14 +56,14 @@ int main() {
     char *cube_loc = "resource/cube.obj";
     Vertices cube_vertices;
     Indices cube_indices;
-    Texture cube_tex;
+    Textures cube_tex;
     parse_obj(cube_loc, &cube_vertices, &cube_indices, &cube_tex);
 
 
-    char *obj = "resource/cube.obj";
+    char *obj = "resource/Alleyway_BG_Mesh.obj";
     Vertices obj_vertices;
     Indices obj_indices;
-    Texture obj_tex;
+    Textures obj_tex;
     parse_obj(obj, &obj_vertices, &obj_indices, &obj_tex);
 
 
@@ -97,7 +97,7 @@ int main() {
     ShaderUse(models_shader);
     glUniform3f(glGetUniformLocation(models_shader.ID, "light.ambient"), 0.2, 0.2, 0.2);
     glUniform3f(glGetUniformLocation(models_shader.ID, "light.position"), lightPos[0], lightPos[1], lightPos[2]);
-    glUniform3f(glGetUniformLocation(models_shader.ID, "light.diffuse"), 0.5, 0.5, 0.5);
+    glUniform3f(glGetUniformLocation(models_shader.ID, "light.diffuse"), 0.9, 0.9, 0.9);
     glUniform3f(glGetUniformLocation(models_shader.ID, "light.specular"), 1.0, 1.0, 1.0);
     glUniformMatrix4fv(glGetUniformLocation(models_shader.ID, "projection"), 1,
                        GL_FALSE, &projection[0][0]);
@@ -119,14 +119,16 @@ int main() {
 
         ShaderUse(models_shader);
         GetViewMatrix(&camera, view);
-        glUniform3f(glGetUniformLocation(models_shader.ID, "material.diffuse"), obj_tex.diffuse[0], obj_tex.diffuse[1], obj_tex.diffuse[2]);
-        glUniform3f(glGetUniformLocation(models_shader.ID, "material.specular"), obj_tex.specular[0], obj_tex.specular[1], obj_tex.specular[2]);
-        glUniform1f(glGetUniformLocation(models_shader.ID, "material.shininess"), obj_tex.shininess);
         glUniformMatrix4fv(glGetUniformLocation(models_shader.ID, "view"), 1, GL_FALSE,
                            &view[0][0]);
         glBindVertexArray(modelVAO);
         glUniformMatrix4fv(glGetUniformLocation(models_shader.ID, "model"), 1, GL_FALSE,
                      &model[0][0]);
+        for (size_t i = 0; i < obj_tex.count; i++) {
+            glUniform3f(glGetUniformLocation(models_shader.ID, "material.diffuse"), obj_tex.data[i].diffuse[0], obj_tex.data[i].diffuse[1], obj_tex.data[i].diffuse[2]);
+            glUniform3f(glGetUniformLocation(models_shader.ID, "material.specular"), obj_tex.data[i].specular[0], obj_tex.data[i].specular[1], obj_tex.data[i].specular[2]);
+            glUniform1f(glGetUniformLocation(models_shader.ID, "material.shininess"), obj_tex.data[i].shininess);
+        }
         glDrawElements(GL_TRIANGLES, obj_indices.size, GL_UNSIGNED_INT, 0);
 
         glfwSwapBuffers(window);
